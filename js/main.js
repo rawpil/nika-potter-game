@@ -50,26 +50,32 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchStartY = 0;
     let isMoving = false;
     let isTouchingPlayer = false; // Флаг для отслеживания касания персонажа
+    let lastTapTime = 0; // Время последнего касания для двойного касания
+    let isDoubleTap = false; // Флаг двойного касания
     
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         const touch = e.touches[0];
-        touchStartX = touch.clientX;
-        touchStartY = touch.clientY;
+        
+        // Получаем правильные координаты касания относительно canvas
+        const rect = canvas.getBoundingClientRect();
+        const touchX = touch.clientX - rect.left;
+        const touchY = touch.clientY - rect.top;
+        
+        touchStartX = touchX;
+        touchStartY = touchY;
         isMoving = false;
         
         if (game.gameState === 'playing') {
             const canvasWidth = canvas.width;
-            const touchX = touch.clientX;
-            const touchY = touch.clientY;
             
             // Проверяем, касается ли палец персонажа или его области
             const player = game.player;
             const playerArea = {
-                x: player.x - 20, // Расширяем область персонажа для удобства
-                y: player.y - 20,
-                width: player.width + 40,
-                height: player.height + 40
+                x: player.x - 30, // Расширяем область персонажа для удобства
+                y: player.y - 30,
+                width: player.width + 60,
+                height: player.height + 60
             };
             
             isTouchingPlayer = (
@@ -78,6 +84,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 touchY >= playerArea.y && 
                 touchY <= playerArea.y + playerArea.height
             );
+            
+            // Проверяем двойное касание персонажа для стрельбы
+            const currentTime = Date.now();
+            if (isTouchingPlayer && currentTime - lastTapTime < 300) {
+                isDoubleTap = true;
+                game.shoot(); // Стреляем при двойном касании персонажа
+                console.log('Double tap - shooting!');
+            }
+            lastTapTime = currentTime;
+            
+            // Стрельба при касании двумя пальцами одновременно
+            if (e.touches.length >= 2) {
+                game.shoot();
+                console.log('Two finger tap - shooting!');
+            }
+            
+            console.log('Touch start:', {
+                touchX, touchY,
+                playerX: player.x, playerY: player.y,
+                playerArea,
+                isTouchingPlayer,
+                isDoubleTap,
+                touchCount: e.touches.length
+            });
             
             // Стрельба при касании правой части экрана (только если не касаемся персонажа)
             if (!isTouchingPlayer && touchX > canvasWidth * 0.67) {
@@ -90,8 +120,11 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         if (game.gameState === 'playing' && isTouchingPlayer) {
             const touch = e.touches[0];
-            const touchX = touch.clientX;
-            const touchY = touch.clientY;
+            
+            // Получаем правильные координаты касания относительно canvas
+            const rect = canvas.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            const touchY = touch.clientY - rect.top;
             
             // Получаем позицию персонажа
             const player = game.player;
@@ -102,33 +135,30 @@ document.addEventListener('DOMContentLoaded', () => {
             game.keys['ArrowLeft'] = false;
             game.keys['ArrowRight'] = false;
             
-            // Определяем направление движения относительно текущей позиции персонажа
-            const deltaX = touchX - (player.x + player.width / 2);
-            const deltaY = touchY - (player.y + player.height / 2);
+            // Альтернативный способ: прямое позиционирование персонажа под пальцем
+            const targetX = touchX - player.width / 2;
+            const targetY = touchY - player.height / 2;
             
-            // Минимальное расстояние для начала движения
-            const minDistance = 10;
+            // Ограничиваем движение в пределах экрана
+            const maxX = canvas.width - player.width;
+            const maxY = canvas.height - player.height;
             
-            if (Math.abs(deltaX) > minDistance || Math.abs(deltaY) > minDistance) {
-                isMoving = true;
-                
-                // Устанавливаем направление движения
-                if (Math.abs(deltaY) > Math.abs(deltaX)) {
-                    // Вертикальное движение
-                    if (deltaY > 0) {
-                        game.keys['ArrowDown'] = true;
-                    } else {
-                        game.keys['ArrowUp'] = true;
-                    }
-                } else {
-                    // Горизонтальное движение
-                    if (deltaX > 0) {
-                        game.keys['ArrowRight'] = true;
-                    } else {
-                        game.keys['ArrowLeft'] = true;
-                    }
-                }
-            }
+            const clampedX = Math.max(0, Math.min(targetX, maxX));
+            const clampedY = Math.max(0, Math.min(targetY, maxY));
+            
+            // Плавно перемещаем персонажа к цели
+            const moveSpeed = 0.3; // Скорость следования (0-1)
+            player.x += (clampedX - player.x) * moveSpeed;
+            player.y += (clampedY - player.y) * moveSpeed;
+            
+            isMoving = true;
+            
+            console.log('Direct movement:', {
+                touchX, touchY,
+                targetX, targetY,
+                clampedX, clampedY,
+                playerX: player.x, playerY: player.y
+            });
         }
     });
     
@@ -136,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         
         // Если не было движения и касались персонажа, это может быть двойное касание для стрельбы
-        if (!isMoving && isTouchingPlayer) {
+        if (!isMoving && isTouchingPlayer && !isDoubleTap) {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
             
@@ -156,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         game.keys['ArrowRight'] = false;
         isMoving = false;
         isTouchingPlayer = false;
+        isDoubleTap = false; // Сбрасываем флаг двойного касания
     });
     
     // Переменная для отслеживания двойного касания
