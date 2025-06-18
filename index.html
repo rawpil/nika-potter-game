@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гарри Поттер: Облачная Стрельба</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="game-container">
+        <div class="ui-overlay">
+            <div class="score">Очки: <span id="score">0</span></div>
+            <div class="lives">Жизни: <span id="lives">3</span></div>
+        </div>
+        
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div class="game-menu" id="gameMenu">
+            <h1>Гарри Поттер: Облачная Стрельба</h1>
+            <button id="startButton">Начать игру</button>
+            <button id="instructionsButton">Инструкции</button>
+        </div>
+        
+        <div class="character-select" id="characterSelect" style="display: none;">
+            <h2>Выберите персонажа</h2>
+            <div class="character-grid">
+                <div class="character-option" data-character="harry">
+                    <img src="assets/images/harry_avatar.png" alt="Гарри Поттер">
+                    <h3>Гарри Поттер</h3>
+                    <p>Главный герой</p>
+                </div>
+                <div class="character-option" data-character="germiona">
+                    <img src="assets/images/germiona_avatar.png" alt="Гермиона">
+                    <h3>Гермиона</h3>
+                    <p>Самая умная ведьма</p>
+                </div>
+            </div>
+            <button id="backToMenuButton">Назад в меню</button>
+        </div>
+        
+        <div class="instructions" id="instructions" style="display: none;">
+            <h2>Как играть:</h2>
+            <p>• Используйте стрелки или WASD для движения Гарри во всех направлениях</p>
+            <p>• Нажимайте Пробел для заклинания молнии</p>
+            <p>• Уничтожайте цели на облаках</p>
+            <p>• Избегайте столкновений с облаками</p>
+            <button id="backButton">Назад</button>
+        </div>
+        
+        <div class="game-over" id="gameOver" style="display: none;">
+            <h2>Игра окончена!</h2>
+            <p>Ваш счет: <span id="finalScore">0</span></p>
+            <button id="restartButton">Играть снова</button>
+            <button id="menuButton">В меню</button>
+        </div>
+    </div>
+    
+    <script src="js/game.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/cloud.js"></script>
+    <script src="js/lightning.js"></script>
+    <script src="js/target.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 
